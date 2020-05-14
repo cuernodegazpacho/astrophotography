@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block inline_css %}
+{{block.super}}
+{% include 'user_image/image_set.css' %}
+{% include 'view_menu.css' %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}css/jquery.autocomplete.css">
+<style type="text/css">
+#search_block {
+    padding: 10px;
+    background-color: #eee;
+}
+#search_menu {
+    float: left;
+    width: 20%;
+    border-right: 1px solid #ccc;
+}
+#search_settings {
+    float: left;
+    padding-left: 10px;
+}
+#search_menu ul.view_menu li {
+    margin-bottom: 0px;
+}
+</style>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.autocomplete.js"></script>
+<script type="text/javascript">
+function change_search_category(cat) {
+    $('#id_search_category').val(cat);
+    $('.category_block').hide();
+    $('.category_block > input').attr('disabled','disabled');
+    block = '#' + cat + '_block';
+    $(block).show();
+    $(block + ' > input').removeAttr('disabled');
+}
+
+$(document).ready(function() {
+    $('.search_category_link').click(function(e) {
+        change_search_category($(this).attr('title'));
+        e.preventDefault();
+    });
+    change_search_category('{{ search_category }}');
+    $("#id_user").autocomplete('/users/autocomplete');
+    $("#id_tags").autocomplete('/tags/autocomplete');
+});
+</script>
+{% endblock %}
+
+{% block title %}
+<a href="{% url 'image-search' %}">Search</a>
+{% if search_category == 'tag' and tags %}
+    &gt; Tags:
+    {% for tag in tags %}
+        {{ tag.text }}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+{% endif %}
+{% if search_category == 'user' and display_user %}
+    &gt; User:
+    {% include 'user/display_name.html' with user=display_user %}
+{% endif %}
+{% if search_category == 'location' and form.ra.data and form.dec.data and form.radius.data %}
+    &gt; Location: center ({{ form.ra.data }}, {{ form.dec.data }}); radius {{ form.radius.data }} deg
+{% endif %}
+{% if search_category == 'image' and image %}
+    &gt; Nearby:
+    <a href="{{ image.get_absolute_url }}">{{ image.original_file_name }}</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+    <div id="search_block">
+        <form name="search_form" method="get">
+        <div>
+        Show: {{ form.show }} 
+            {{ form.calibrated }}<label for="id_calibrated">calibrated</label>&nbsp;&nbsp;
+            {{ form.processing }}<label for="id_processing">processing</label>&nbsp;&nbsp;
+            {{ form.failed }}<label for="id_failed">failed</label>&nbsp;&nbsp;
+        <input type="submit" value="Search" class="bigbutton" style="float:right"/>
+        <div style="clear:both"></div>
+        </div>
+        <hr />
+        {{ form.search_category }}
+        <div id="search_menu">
+            <ul class="view_menu">
+                <li><a href="" title="tag" class="search_category_link">By Tag</a></li>
+                <li><a href="" title="user" class="search_category_link">By User</a></li>
+                <li><a href="" title="location" class="search_category_link">By Location</a></li>
+                <li><a href="" title="image" class="search_category_link">By Image</a></li>
+            </ul>
+        </div>
+        <div id="search_settings">
+            <div id="tag_block" class="category_block">
+                Tags:
+                {{ form.tags }}
+                (separate multiple tags with commas)
+            </div>
+            <div id="user_block" class="category_block">
+                User:
+                {{ form.user }}
+            </div>
+            <div id="location_block" class="category_block">
+                <table>
+                <tr><td>RA:</td><td>{{ form.ra }} degrees</td></tr>
+                <tr><td>Dec:</td><td>{{ form.dec }} degrees</td></tr>
+                <tr><td>Radius:</td><td>{{ form.radius }} degrees</td></tr>
+                </table>
+            </div>
+            <div id="image_block" class="category_block">
+                {{ form.image }}
+            </div>
+        </div>
+        </form>
+        <div style="clear:both"></div>
+    </div>
+    <br />
+    <div id="user_image_content">
+    {% if search_category == 'user' %}
+    {% if not display_user and form.user.data %}
+        No users named '{{ form.user.data }}'.<br />
+    {% endif %}
+    {% if display_users %}
+        Were you looking for 
+        {% for display_user in display_users %}
+            <a href="?search_category=user&user={{display_user.get_profile.display_name}}">
+            <span class="display_name">{{display_user.get_profile.display_name}}</span>
+            <span class="user_id">({{display_user.id}})</span>
+            </a>
+            {% if not forloop.last %},{% endif %}
+        {% endfor %}
+        ?<br />
+        <br />
+    {% endif %}
+    {% endif %}
+    {% include 'user_image/paginated_image_set.html' with page=image_page %}
+    </div>
+{% endblock %}

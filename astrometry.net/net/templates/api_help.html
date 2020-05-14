@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block inline_css %}
+{{block.super}}
+{% include 'dashboard/api_key.css' %}
+{% endblock %}
+
+{% block title %}
+<h2>API</h2>
+{% endblock %}
+
+{% block content %}
+<h2>About the API</h2>
+<p>
+    Astrometry.net allows you to access parts of the service through a JSON API.
+    This API allows you to upload images, check job and submission statuses, and
+    retrieve all those useful bits of data from successfully calibrated fields -
+    all programmatically. This means that it's easy to write a script to upload
+    hundreds of images, integrate our service into your own website, or even 
+    program an application to explore Astrometry.net's data in a unique way. 
+    Have fun!
+</p>
+<h2>Getting Started</h2>
+<p>
+    Before you can start using the API, you need to grab an <u>API key</u>. 
+    This is a randomly generated string tied to your user account; everything
+    you do using the API will be through your account on the Astrometry.net
+    web service (e.g. any API uploads will show up on your web profile).
+</p>
+<p>
+    Your key is available in the My Profile section of the dashboard,
+    {% if user.is_authenticated %} 
+        but here it is for convenience:<br />
+        <span style="margin-left:20px">
+            {% include 'user/api_key.html' with apikey=user_profile.apikey %}
+        </span><br />
+	{% comment %}
+	<form action="{% url 'new_api_key' %}">
+	  You can also <input type="submit" value="Generate a new API key" />
+	</form>
+	<br />
+	{% endcomment %}
+    {% else %}
+        so you must first
+        <a href="{% url 'signin' %}?next={{ request.path }}">Sign In</a>.
+
+    {% endif %}
+
+</p>
+
+<p>
+Then head on over to the
+<a href="http://astrometry.net/doc/net/api.html">API Documentation</a>, such as it is.
+</p>
+
+<p>
+Further questions can go to <a href="http://astrometry.net/group">the Astrometry.net group</a>
+</p>
+
+<h2>Sample Code</h2>
+<p>
+If you speak python, probably the best documentation for the API is our complete implementation of a client:
+<a href="https://github.com/dstndstn/astrometry.net/blob/master/net/client/client.py">API client code</a>
+<br />
+Which you can check out by cloning the Astrometry.net repo and looking in the astrometry/net/client directory;
+<pre>git clone https://github.com/dstndstn/astrometry.net.git</pre>
+</p>
+
+<p>
+There is also
+some <a href="http://astrometry.net/svn/trunk/contrib/cklein_new_anet">contributed
+code from Christopher Klein</a>, used for the PAIRITEL telescope data
+analysis, which runs SourceExtractor and submits a text list of x,y coordinates.
+</p>
+
+
+{% endblock %}

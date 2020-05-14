@@ -1,0 +1,21 @@
+{% if user == recipient_owner %}
+<div id="tag_form_block">
+    <form method="post" name="tag_form" action="{% url 'tag_new' category=category recipient_id=recipient_id %}">
+    {% csrf_token %}
+    <div>
+        {{ tag_form.text }}<br />
+        {{ tag_form.text.errors }}
+    </div>
+    <input type="hidden" name="next" value="{{next}}" />
+    <input type="submit" value="Add Tag" />
+    <span class="form_status">
+        <span class="submitting">
+            <img src="{{ STATIC_URL }}images/loading.gif" />
+            Adding tag...
+        </span>
+        <span class="success good">Tag added!</span>
+        <span class="failure bad">Could not add tag.</span>
+    </span>
+    </form>
+</div>
+{% endif %}

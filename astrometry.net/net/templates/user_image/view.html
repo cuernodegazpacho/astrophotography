@@ -1,0 +1,304 @@
+{% extends "user_image/index.html" %}
+
+{% block inline_css %}
+{{block.super}}
+{% include 'tag/list.css' %}
+{% include 'job/status.css' %}
+{% include 'form_ajax.css' %}
+<style type="text/css">
+#image_container {
+    position: relative;
+    background-color: #000;
+    background-image: url('{{ STATIC_URL }}images/loading-black.gif');
+    background-position: center center;
+    background-repeat: no-repeat;
+    height: {{ display_image.height }}px;
+    text-align: center;
+}
+#hover_bar {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 665px;
+    padding: 5px;
+    color: #000;
+    background-color: #fff;
+}
+#hover_bar #image_link_block {
+    float: left;
+}
+#hover_bar #fullsize_link_block {
+    float: right;
+}
+#left_block {
+    float: left;
+    width: 675px;
+}
+div#on_the_sky {
+    text-align: center;
+}
+div#solver_output li {
+    text-align: left;
+    list-style: none;
+    padding-left: 1em;
+}
+#details p { margin-top:0px; }
+.indent { margin-left: 1em; }
+#tags {  }
+#comments {  }
+div#edit_license {
+    margin-top: 1em;
+    width: 300px;
+}
+#calibration_table {
+    padding: 0px;
+    margin: 0px;
+    border-spacing: 0px;
+    width: 100%;
+}
+#calibration_table td {
+}
+</style>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+{% include 'form_ajax.js' %}
+{% include 'comment/comment.js' %}
+{% include 'tag/tag.js' %}
+<script type="text/javascript">
+var images = {{ images|safe }}
+var current_image = "none";
+
+function changeImage(key) {
+    if (current_image != key) {
+        current_image = key;
+
+        window.location.hash = key;
+        link = $('a[title='+key+']')
+        link.addClass('selected')
+        link.siblings().removeClass('selected')
+        $('#fullsize_link').attr('href',images[key]);
+        
+        image = $("#user_image");
+        image.attr("src", images[key + "_display"]);
+        image.hide();
+        image.load(function() {
+            image.show();
+        });
+    }
+}
+$(document).ready(function() {
+    $('a.image_link').click(function(event) {
+        changeImage($(this).attr('title'));
+        event.preventDefault();
+    });
+    $('#image_container').hover(function() {
+        $('#hover_bar').stop().fadeTo('fast',0.8);
+    },function() {
+        $('#hover_bar').stop().fadeTo('fast',0);
+    });
+    $('#hover_bar').stop().fadeTo('fast',0);
+    
+    hash = window.location.hash.substring(1);
+    if (hash) {
+        changeImage(window.location.hash.substring(1));
+    }
+    else {
+        changeImage('{{ image_type }}');
+    }
+});
+</script>
+{% endblock %}
+
+{% block title %}
+{{block.super}} &gt; 
+<a href="{{ image.get_absolute_url }}">
+    {% if image.original_file_name %}
+        {% include 'user_image/filename.html' with filename=image.original_file_name %}
+    {% else %}
+        no name
+    {% endif %}
+</a>
+{% endblock %}
+{% block content %}
+
+<div class="side_bar">
+    <div id="details">
+        Submitted by {% include 'user/display_name.html' with user=image.user %}<br />
+        <div class="indent">on <span class="timestamp">{{ image.submission.submitted_on }}</span></div>
+        <div class="indent">as 
+            "<a href="{% url 'serve_image' id=image.image.id %}?filename={{ image.original_file_name }}">
+                {% include 'user_image/filename.html' with filename=image.original_file_name %}
+            </a>"
+            (<a href="{{ image.submission.get_absolute_url }}">Submission {{ image.submission.id }}</a>)
+        </div>
+        <div class="indent" id="license">under {% include 'license/license_link.html' with license=image.license %}</a></div>
+        {% if user.is_authenticated and user == image.user %}
+        {% comment %}
+        <br />
+        <div class="indent" id="edit_license">
+            {% include 'license/form.html' with license_form=license_form next=request.path licensable_id=image.id licensable_type='UserImage' %}
+        </div>
+        {% endcomment %}
+        <br />
+        <div class="indent">publicly visible:
+            {% include 'hideable/publicly_visible.html' with hideable=image %}
+        </div>
+        {% endif %}
+    </div>
+    <hr />
+    <div id="job_status">
+        <h3>Job Status</h3>
+        Job {{ job.id }}: <br />
+        <div class="indent">
+            {% include 'job/status.html' with job=job %}
+        </div>
+    </div>
+    <hr />
+    <div id="calibration">
+        <h3>Calibration</h3>
+        {% if calib %}
+        <table id="calibration_table">
+        <tr>
+            <td>Center (RA, Dec):</td><td>({{ calib.format_radec }})</td>
+        </tr>
+        <tr>
+            <td>Center (RA, hms):</td><td>{{ calib.format_ra_hms|safe }}</td>
+        </tr>
+        <tr>
+            <td>Center (Dec, dms):</td><td>{{ calib.format_dec_dms|safe }}</td>
+        </tr>
+        <tr>
+          <td>Size:</td><td>{{ calib.format_size }}</td>
+        </tr>
+        <tr>
+            <td>Radius:</td><td>{{ calib.format_radius }}</td>
+        </tr>
+        <tr>
+          <td>Pixel scale:</td><td>{{ calib.format_pixscale }}</td>
+        </tr>
+        <tr>
+          <td>Orientation:</td><td>{{ calib.format_orientation }}</td>
+        </tr>
+        <tr>
+            <td>WCS file:</td>
+            <td><a href="{% url 'wcs-file' jobid=job.id %}">wcs.fits</a></td>
+        </tr>
+        <tr>
+            <td>New FITS image:</td>
+            <td><a href="{% url 'new-fits-file' jobid=job.id %}">new-image.fits</a></td>
+        </tr>
+        <tr>
+            <td>Reference stars nearby (RA,Dec table):</td>
+            <td><a href="{% url 'rdls-file' jobid=job.id %}">rdls.fits</a></td>
+        </tr>
+        <tr>
+          <td>Stars detected in your images (x,y table):</td>
+          <td><a href="{% url 'axy-file' jobid=job.id %}">axy.fits</a></td>
+        </tr>
+        <tr>
+          <td>Correspondences between image and reference stars (table):</td>
+          <td><a href="{% url 'corr-file' jobid=job.id %}">corr.fits</a></td>
+        </tr>
+        <tr>
+            <td>KMZ (<a href="http://www.google.com/sky/">Google Sky</a>):</td>
+            <td><a href="{% url 'kml-file' jobid=job.id %}?ignore=.kmz">image.kmz</a></td>
+        </tr>
+        <tr>
+          <td>World Wide Telescope:</td>
+          <td><a href="{{ wwt_url }}">view in WorldWideTelescope</a></td>
+	</tr>
+        </table>
+        <br />
+
+        <div id="on_the_sky">
+            <img src="{% url 'onthesky_image' zoom=0 calid=job.calibration.id %}" /><br />
+            {% if calib.get_radius < 15 %}
+            <img src="{% url 'onthesky_image' zoom=1 calid=job.calibration.id %}" /><br />
+            {% if calib.get_radius < 1.5 %}
+            <img src="{% url 'onthesky_image' zoom=2 calid=job.calibration.id %}" /><br />
+            {% if calib.get_radius < 0.15 %}
+            <img src="{% url 'onthesky_image' zoom=3 calid=job.calibration.id %}" /><br />
+            {% endif %}
+            {% endif %}
+            {% endif %}
+        </div>
+        {% else%}
+        No calibration data available.
+        {% endif %}
+    </div>
+    <hr />
+    <div id="tags">
+        <h3>Tags</h3>
+        {% include 'tag/list.html' with category='user_image' recipient_id=image.id tags=image.tags.all recipient_owner=image.user next=request.path %}
+        {% include 'tag/form.html' with category='user_image' recipient_id=image.id recipient_owner=image.user next=request.path %}
+    </div>
+    {% if user.is_authenticated %}
+    <hr />
+    <div id="flags">
+        <h3>Flags</h3>
+        {% include 'flag/form.html' with user=request.user flags=flags selected_flags=selected_flags category='user_image' recipient_id=image.id next=request.path %}
+    </div>
+    {% endif %}
+</div>
+<div id="left_block">
+    {% if user == image.user %}
+    <div>
+        <a href="{% url 'image_edit' user_image_id=image.id %}">Edit Image</a>
+        <hr />
+    </div>
+    {% endif %}
+    <div id="submitted_field">
+        <div id="image_container">
+            <img id="user_image" src="{{ display_url }}" />
+            <div id="hover_bar">
+                <div id="image_link_block">
+                    <a href="?image=original" title="original" class="image_link">original</a> |
+                    {% if calib %}
+                    <a href="?image=redgreen" title="redgreen" class="image_link">red-green</a> |
+                    <a href="?image=annotated" title="annotated" class="image_link">annotated</a> |
+                    <a href="?image=sdss" title="sdss" class="image_link">SDSS</a> |
+		    {% comment %}
+                    <a href="?image=galex" title="galex" class="image_link">GALEX</a> |
+                    <a href="?image=enhanced" title="enhanced" class="image_link">Enhance!</a> |
+		    {% endcomment %}
+                    <a href="?image=extraction" title="extraction" class="image_link">extraction</a>
+                    {% else %}
+                        {% if job %}
+                        <a href="?image=extraction" title="extraction" class="image_link">extraction</a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div id="fullsize_link_block">
+{% comment %}
+                    <a href="{{ fullsize_url }}" id="fullsize_link">fullsize ({{image.image.width}}x{{image.image.height}} pixels)</a>
+{% endcomment %}
+                    <a href="{{ fullsize_url }}" id="fullsize_link">fullsize</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+    <div id="description">
+        {{ image.description }}
+    </div>
+    {% if calib %}
+    {% with nearby_images=image.get_neighbouring_user_images %}
+        {% if nearby_images %}
+        <div id="nearby_images">
+            <h3 style="display:inline-block">Nearby Images</h3>
+            (<a href="{% url 'images-nearby' user_image_id=image.id %}">View All</a>)
+            {% include 'user_image/image_set.html' with images=nearby_images|slice:'6' thumbnail_size='small' %}
+        </div>
+        {% endif %}
+    {% endwith %}
+    {% endif %}
+    <div id="comments">
+        <h3>Comments</h3>
+        {% include 'comment/list.html' with comments=image.comment_receiver.comments.all next=request.path %}
+        {% include 'comment/form.html' with comment_form=comment_form category='user_image' recipient_id=image.comment_receiver.id next=request.path %}
+    </div>
+</div>
+<div style="clear:both"></div>
+{% endblock %}

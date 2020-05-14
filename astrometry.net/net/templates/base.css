@@ -1,0 +1,258 @@
+<style type="text/css">
+html {
+    overflow-Y: scroll;
+    height: 100%;
+}
+body {
+    height: 100%;
+    text-align: center;
+    margin: 0px;
+    font-family: Arial, sans-serif;
+    font-size: 100%;
+    background: #ddd url('{{ STATIC_URL }}images/bg.png') repeat-y center center;
+}
+div.root {
+    text-align: left;
+    width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #fff;
+}
+div#root_content {
+    padding: 10px 0px 10px 0px;
+}
+div#site_header {
+    padding: 5px;
+}
+div#title {
+    margin: 0px;
+    padding: 5px;
+    padding-left: 3em;
+    background-color: #ddd;
+    /*border-bottom: 1px solid #000;*/
+}
+div#title h2 {
+    margin: 0px;
+    font-size: 1.1em;
+    font-weight:bold;
+}
+div#not_footer {
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    margin-bottom: -60px;
+}
+#push_footer, #root_footer {
+    height: 60px;
+}
+div#root_footer {
+    background-color: #ddd;
+}
+div#root_footer p {
+    margin: 0px;
+    padding: 10px;
+    color: #777;
+    font-size: 75%;
+}
+div#messages {
+    text-align: center;
+    font-size: 90%;
+}
+#messages .success { color: #0c0; }
+#messages .error { color: #e00; }
+span.display_name { }
+span.user_id {
+    color: #333;
+}
+.timestamp {
+    color: #999;
+    font-style: italic;
+}
+div.comment div.comment_footer {
+    margin-left: 3em;
+    font-size: .8em;
+}
+dt {
+    font-weight:bold;
+}
+a          {color: #00a; text-decoration: none; background-color: transparent;}
+a:link     {background-color: transparent; color: #00a;}
+a:visited  {background-color: transparent; color: #00a;}
+a:hover    {background-color: #06c; color: #fff; text-decoration: none;}
+a.selected {color: #000; font-weight: bold;}
+a.selected:hover {background-color: transparent; color: #000}
+a img      {border: 0px;}
+
+#menu {
+    position: relative;
+    width: 100%;
+    height: 30px;
+    border-bottom: 1px solid #aaa;
+    border-top: 1px solid #aaa;
+    font-size: 90%;
+    line-height: 30px;
+}
+#menu ul {
+    margin: 0px;
+    padding: 0px;
+    display: inline-block;
+    list-style: none;
+    z-index: 5;
+}
+#menu ul li {
+    position: relative;
+    text-align: center;
+    margin: 0px;
+    border-right: 1px solid #ccc;
+    display: inline-block;
+}
+#menu ul li a {
+    display: inline-block;
+    width: 115px;
+    height: 30px;
+}
+#menu ul li a:hover {
+    background-color: #06c;
+}
+#menu li:hover ul {
+    display: block;
+}
+#menu .dropdown {
+    position: absolute;
+    left: -1px;
+    display: none;
+    background-color: #fff;
+    border: 1px solid #000;
+    border-top: 1px solid #ccc;
+}
+#menu .dropdown li {
+    display: block;
+    border: 0px;
+    font-size: 90%;
+}
+#menu #search {
+    float: right;
+    margin-right: 10px;
+}
+#menu input[type=text] {
+    width: 200px;
+}
+#auth_status { 
+    float: right;
+    text-align: right;
+    font-size: 75%;
+    font-family:sans-serif;
+}
+#auth_status a { padding-right: 5px; }
+#title {
+    clear: both;
+    margin: 10px;
+}
+#content {
+    margin: 10px;
+    margin-top: 0px;
+}
+.good { color:#0c0; }
+.bad { color:#e00; }
+.code {
+    color: #666;
+    font-family:monospace;
+    font-size:1.1em;
+}
+.chosen { font-weight:bold; }
+.notice { font-style:italic; }
+h2 {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+span#user_info { font-weight:bold; }
+.bigbutton { font-size:125%; padding:2px; padding-left:10px; padding-right:10px; font-weight: bold}
+div.myerrors { font-size:110%; color:red; }
+.bigtext { font-size:110%; }
+.normalbutton { font-size:100%; padding:2px; padding-left:10px; padding-right:10px; margin:10px; }
+div.c {margin-left:auto; margin-right:auto; text-align:center;}
+h2.c {margin-left:auto; margin-right:auto; text-align:center;}
+p.c {margin-left:auto; margin-right:auto; text-align:center;}
+table.c {margin-left:auto; margin-right:auto;}
+td.r {text-align:right; padding:10px;}
+td.c {text-align:center;}
+.boxedtable {padding:15px; padding-left:30px; padding-right:30px; margin-right:auto; margin-left:auto; border-style:solid; border-color:gray; border-width:thin;}
+.fineprint { font-size:85%; text-align:center; color:#888; margin-left:auto; margin-right:auto; }
+.fineprint a { color:#999; }
+.errorlist {margin: 0px; padding: 0px; display: inline-block; list-style: none; color: #a00; background-color: #faa}
+
+hr {
+    color: #999;
+    background-color: #999;
+    height: 1px;
+    border: 0px;
+}
+.side_bar {
+    float: right;
+    width: 275px;
+    height: 100%;
+    padding: 10px;
+    background-color: #eee;
+    font-size: 90%;
+}
+.side_bar hr {
+    color: #999;
+    background-color: #999;
+    height: 1px;
+    border: 0px;
+}
+.side_bar h3 {
+    text-align: center;
+    margin-top: 0px;
+}
+
+.top_bar {
+    font-size: 90%; 
+    background-color: #eee;
+    padding: 10px;
+}
+.top_bar h3 {
+    margin-top: 0px;
+}
+
+.settings_table {
+    border: 0px;
+    border-spacing: 0px;
+    width: 100%;
+}
+.settings_table > tbody > tr {
+    vertical-align: top;
+}
+.settings_table > tbody > tr > td {
+    vertical-align: top;
+    padding: 10px 5px 10px 5px;
+    border-top: #ccc 1px solid;
+}
+.settings_table .leftcolumn {
+    text-align: left;
+    width: 40%;
+}
+.setting_title {
+    font-weight: bold;
+}
+.setting_description {
+    font-size: 75%;
+}
+.pagination {
+    width: 100%;
+    text-align: center;
+}
+.paginate_pages { padding: 2px 3px; border: 1px solid #ddd; cursor: pointer; text-decoration: underline; }
+.paginate_first, .paginate_last { margin: 1px; padding: 2px 6px; border: 1px solid #ddd; font-weight: bold; }
+.paginate_previous, .paginate_next { margin: 1px; padding: 2px 3px; border: 1px solid #ddd; }
+.paginate_link { margin: 1px; padding: 2px 4px; border: 1px solid #ddd; }
+.paginate_current { font-weight: bold; border: 0px; color: #000; }
+.paginate_stats { padding: 5px; color: #999; font-size: 85% }
+
+input[type=text] {
+    border: 1px solid #000;
+}
+.license {
+    font-style: italic; 
+}
+</style>

@@ -1,0 +1,16 @@
+<div class="user_list">
+{% for user in users %}
+    <div class="user_info">
+        <span class="user_name">
+            {% include 'user/display_name.html' with user=user %}
+        </span>
+        <div class="user_details">
+            Joined <span class="timestamp">{{ user.date_joined }}</span><br />
+            {{ user.user_images.count }} image{{ user.user_images.count|pluralize }}
+       </div>
+       <div style="clear:both"></div>
+    </div>
+{% empty %}
+    No users.
+{% endfor %}
+</div>

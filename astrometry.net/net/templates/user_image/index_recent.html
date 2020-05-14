@@ -1,0 +1,10 @@
+{% extends 'user_image/index.html' %}
+
+{% block title %}
+{{block.super}} &gt; 
+<a href="{% url 'index_recent' %}">Recent</a>
+{% endblock %}
+
+{% block user_image_index_content %}
+    {% include 'user_image/paginated_image_set.html' with image_page=image_page %}
+{% endblock %}

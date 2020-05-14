@@ -1,0 +1,4 @@
+{% load custom_tags %}
+{% paginator user_page 'user' %}
+{% include 'user/list.html' with users=user_page.object_list %}
+{% paginator user_page %}

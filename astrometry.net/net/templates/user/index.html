@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load custom_tags %}
+
+{% block inline_css %}
+{{block.super}}
+{% include 'user/list.css' %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}css/jquery.autocomplete.css">
+<style type="text/css">
+#search_block {
+    padding: 10px;
+    background-color: #eee;
+}
+#search_menu {
+}
+#search_settings {
+    padding-left: 10px;
+}
+#search_menu ul.view_menu li {
+    margin-bottom: 0px;
+}
+#sort_menu {
+    padding: 10px;
+}
+</style>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script type="text/javascript">
+$(document).ready(function() {
+    $("#id_query").autocomplete('/users/autocomplete');
+});
+</script>
+{% endblock %}
+
+{% block title %}
+<a href="{% url 'users' %}">Users</a>
+{% if user_search_form.query.data %}
+    &gt; Name Search: '{{ user_search_form.query.data }}'
+{% endif %}
+{% endblock %}
+
+{% block content %}
+    <form method="get" action=""> 
+    <input type="hidden" name="sort" value="{{ request.GET.sort }}" />
+    <div id="search_block">
+        <div id="search_menu">
+            Search (name):
+            {{ user_search_form.query }}
+            <input type="submit" value="Search" />
+        </div>
+        <div id="search_settings">
+            {% block search_settings %}
+            {% endblock %}
+        </div>
+        </form>
+        <div style="clear:both"></div>
+    </div>
+    <div id="search_results">
+        {% block search_results %}
+            <div id="sort_menu">
+                {% with sort=request.GET.sort %}
+                Sort:
+                <a {% if sort == 'name' or not sort %}class="selected" {% endif %}href="?{% query_string 'sort' 'name' %}&page=1">name</a> | 
+                <a {% if sort == 'date' %}class="selected" {% endif %}href="?{% query_string 'sort' 'date' %}&page=1">date joined</a> | 
+                <a {% if sort == 'images' %}class="selected" {% endif %}href="?{% query_string 'sort' 'images' %}&page=1">images submitted</a>
+                {% endwith %}
+            </div>
+            {% include 'user/paginated_list.html' with user_page=user_page %}
+        {% endblock %}
+    </div>
+    </form>
+{% endblock %}
+

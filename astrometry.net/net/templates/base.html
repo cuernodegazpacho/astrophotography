@@ -1,0 +1,117 @@
+{% include "header.html" %}
+
+{% block head %}
+<head>
+
+{% block favicon %}
+{% include "favicon.html" %}
+{% endblock favicon %}
+
+{% block link_css %}
+<!--<link rel="stylesheet" href="{{ STATIC_URL }}css/base.css" />-->
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}css/jquery.autocomplete.css" />
+{% endblock %}
+
+{% block autocomplete %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.autocomplete.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('a.confirm').live('click', function(event) {
+        var answer = confirm($(this).attr("title"));
+        if (!answer) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    });
+    $('#search_query').autocomplete('/tags/autocomplete');
+});
+</script>
+{% endblock %}
+
+{% include 'base.css' %}
+{% block inline_css %}
+{% endblock inline_css %}
+
+{% block javascript %}
+{% endblock javascript %}
+
+<title>{% block pagetitle %}Astrometry.net{% endblock %}</title>
+
+{% block extrahead %}
+{% endblock extrahead %}
+
+</head>
+{% endblock head %}
+
+{% block thebody %}
+
+{% block bodytag %}
+<body>
+{% endblock bodytag %}
+
+<div class="root" id="not_footer">
+    <div id="root_header">
+        <div id="site_header">
+            <div id="auth_status">
+            {% if user.is_authenticated %}
+                Signed in as <span id="user_info">{{ user.id }} / {{ user.get_profile.display_name }} / {{ user.username }} ({{ user.email }})</span> |
+                <a href="{% url 'signout' %}">Sign Out</a>
+            {% else %}
+		<span style="color:red;">NOTE:</span> signins should be working again... but read about
+		  <a href="https://groups.google.com/forum/#!topic/astrometry/YzNu5AF103s">account migration.</a></span>&nbsp;
+                Not signed in | 
+
+<a href="{% url 'signin' %}">Sign In</a>
+
+		{% endif %}
+            </div>
+            <div id="logo">
+                <a class="selected" href="{% url 'home' %}">
+                    <img src="http://astrometry.net/logo.png" alt="Astrometry.net logo" />
+                </a>
+            </div>
+        </div>
+
+        {% block messageblock %}
+        <div id="messageshtml">
+        {% include "messages.html" %}
+        </div>
+        {% endblock messageblock %}
+
+
+        {% block menublock %}
+        <div id="menu">
+        {% include "menu.html" %}
+        </div>
+        {% endblock menublock %}
+
+        {% block titlediv %}
+        <div id="title">
+        <h2>{% block title %}{% endblock %}</h2>
+        </div>
+        {% endblock %}
+    </div>
+
+    <div id="root_content">
+        <div id="messages">
+        {% for message in messages %}
+            <div{% if message.tags %} class="{{message.tags}}"{% endif %}>{{message}}</div>
+        {% endfor %}
+        </div>
+
+        <div id="content">
+        {% block content %}
+        {% endblock %}
+        </div>
+    </div>
+
+    <div id="push_footer"></div>
+</div>
+
+<div class="root" id="root_footer">
+     {% include 'footer.html' %}
+</div>
+</body>
+{% endblock thebody %}
+</html>

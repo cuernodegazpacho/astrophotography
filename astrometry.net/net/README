@@ -1,0 +1,183 @@
+
+
+We store the database passwords in svn/secure; check out separately with:
+  svn co svn+ssh://astrometry.net/svn/secure/django-db secrets
+
+Choose which settings to use:
+  ln -s settings_test.py settings.py
+
+
+Add some things to your PYTHONPATH:
+  /usr/local/django-1.3/lib/python
+  /usr/local/django-openid-auth-0.3/lib/python
+  /usr/local/south-0.7.3/lib/python
+
+eg:
+
+PYP=
+PYP=${PYP}:/usr/local/django-1.3/lib/python
+PYP=${PYP}:/usr/local/django-openid-auth-0.3/lib/python
+PYP=${PYP}:/usr/local/south-0.7.3/lib/python
+PYP=${PYP}:.
+export PYTHONPATH=${PYP}
+
+Add some things to your PKG_CONFIG_PATH:
+  /usr/local/wcslib-4.6.3/lib/pkgconfig
+
+Add some things to your LD_LIBRARY_PATH:
+  /usr/local/wcslib-4.6.3/lib
+
+And to your PATH:
+  /usr/local/netpbm/bin
+
+And also add NETPBM config settings, eg:
+
+export NETPBM_INC="-I/usr/local/netpbm/include"
+export NETPBM_LIB="-L/usr/local/netpbm/lib -lnetpbm"
+
+
+You will also need to build the Astrometry.net tools:
+  (cd ..; make; make extra; make py)
+
+Need django-openid-auth:
+  https://launchpad.net/django-openid-auth
+
+Optionally, grab Henry Draper catalog:
+  svn cat svn+ssh://astrometry.net/svn/binary/henry-draper/hd.fits > hd.fits
+
+Nova/Supernova setup:
+
+user nova@oven
+
+Nova:
+- svn checkout is in ~/nova; url is like:
+    svn+ssh://astrometry.net/svn/tags/nova/2011-06-08-2
+- database is 'an-nova'
+- ssh config entry is "an-nova"
+- process_submissions.py is running in screen "nova"
+- apache is /etc/apache2-nova
+- logs are in /etc/apache2-nova/logs/
+
+Supernova:
+- svn checkout is in ~/supernova; url is trunk:
+    svn+ssh://astrometry.net/svn/trunk/src/astrometry
+- database is 'an-supernova'
+- ssh config entry is "an-supernova"
+- process_submissions.py is running in screen "supernova"
+- apache is /etc/apache2-supernova
+- logs are in /etc/apache2-supernova/logs/
+
+
+
+Run process_submissions.py by 'cd'ing into the appropriate net/ directory and:
+  python -u process_submissions.py < /dev/null >> proc.log 2>&1 &
+
+To specify the number of threads for processing jobs and submissions, use the
+--jobthreads and --subthreads options. For example, to process submissions
+with 8 threads for jobs, and 4 threads for submissions:
+  python -u process_submissions.py --jobthreads=8 --subthreads=4 \
+  < /dev/null >> proc.log 2>&1 &
+
+-You need the "an-test" ssh config to connect to the compute server:
+
+1. In your ~/.ssh/config file you need a snippet like:
+
+Host an-test
+Hostname astro.cs.toronto.edu
+User live
+IdentityFile ~/.ssh/id_an_net
+IdentitiesOnly yes
+ForwardAgent no
+ForwardX11 no
+ForwardX11Trusted no
+
+2. You need the ~/.ssh/id_an_net key -- copy it from nova@oven.
+
+
+When you're ready to tag 'nova', do:
+
+svn copy svn+ssh://astrometry.net/svn/trunk/src/astrometry \
+  svn+ssh://astrometry.net/svn/tags/nova/2011-06-08-1
+
+OR:
+
+cd ~/supernova
+svn copy . ^/tags/nova/2011-06-08-1
+
+(choosing the tag version name appropriately)
+
+and then:
+
+ssh nova
+cd nova
+# See what version you're currently running:
+svn info   
+#
+# [future: do database snapshot, backup, transition]
+#
+# Switch to the new version you just tagged:
+#svn switch svn+ssh://astrometry.net/svn/tags/nova/2011-06-08-2
+svn switch ^/tags/nova/2011-06-08-2
+# Build executables
+make
+make py
+# Restart services
+screen -R nova
+# kill running process_submissions -- possible via:
+  jobs
+  fg 1
+  [ctrl-C]
+or:
+  jobs
+  kill %1
+# Restart process_submissions.py:
+python -u process_submissions.py < /dev/null >> proc.log 2>&1 &
+# exit the "screen"
+[ctrl-A d]
+
+
+
+Using the client:
+
+see client/README for more information
+
+
+
+Adding database users:
+
+as root, psql:
+
+create role USERNAME login;
+alter role USERNAME createdb;
+grant nova to USERNAME;
+
+
+I did, initially:
+create role nova;
+alter role nova createdb;
+grant all on database "an-test" to nova;
+as nova:
+create database "an-supernova";
+create database "an-nova";
+as root:
+grant all on database "an-supernova" to nova;
+grant all on database "an-nova" to nova;
+
+
+--2011-06-29--
+
+-changed pg_hba and database secrets -- django uses user 'nova' too
+
+-changed db tables owner to nova:
+(for x in $(echo "\d+" | psql an-nova | awk -F '|' '{print $2}' | tail -n+3 | grep -v '^$'); do echo "alter table $x owner to nova;"; done) | psql an-nova
+(for x in $(echo "\d+" | psql an-supernova | awk -F '|' '{print $2}' | tail -n+3 | grep -v '^$'); do echo "alter table $x owner to nova;"; done) | psql an-supernova
+
+Now nova@oven can "pg_dump an-nova".
+
+-added crontab for nova: do a daily dump of an-nova database to ~/database-backups
+-added crontab for dstn@broiler: rsync the database backups to /data1/nova
+
+-added ~/data-backups, with script "backup-nova.sh" that rsyncs to
+oven:/data2/nova-data-backup
+
+

@@ -1,0 +1,7 @@
+<div id="comment_list">
+{% for comment in comments %}
+    {% include 'comment/comment.html' with comment=comment next=next %} 
+{% empty %}
+    <p><span class="empty">No comments.</p>
+{% endfor %}
+</div>

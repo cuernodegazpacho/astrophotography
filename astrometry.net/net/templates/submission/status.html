@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+{% if sub.is_finished %}
+{% else %}
+
+{% comment %}
+<meta http-equiv="refresh" content="10; URL=" />
+{% endcomment %}
+
+{% endif %}
+{% endblock extrahead %}
+
+{% block inline_css %}
+{{ block.super }}
+{% include 'job/status.css' %}
+<style type="text/css">
+#submission_details {
+    float: left;
+    width: 50%;
+}
+#upload_settings {
+    float: left;
+    padding-left: 10px;
+    border-left: 1px solid #ccc;
+}
+.leftcolumn {
+    width: 150px;
+}
+#submission_images td {
+    padding: 5px; 
+    vertical-align: top;
+}
+.log_tail {
+    width: 640px;
+    overflow: auto;
+}
+</style>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script type="text/javascript">
+{% if not finished %}
+refresh_timer = setTimeout("location.reload()", 10000);
+
+function stop_refresh() {
+    $('#refresh_block').hide('fast');
+    clearTimeout(refresh_timer);
+    return false;
+}
+{% endif %}
+
+$(document).ready(function() {
+    $('.log_tail_link').click(function(e) {
+        $(this).next('.log_tail').stop(true, true).slideToggle();
+        e.preventDefault();
+    }).toggle(function() {
+        $(this).children('span').text("[+]");
+    }, function() {
+        $(this).children('span').text("[-]");
+    });
+});
+</script>
+{% endblock %}
+
+{% block pagetitle %}
+Astrometry.net submission {{ sub.id }}
+{% endblock %}
+
+{% block title %}
+Submission {{ sub.id }}
+{% endblock %}
+
+{% block content %}
+{% if not finished %}
+<div id="refresh_block">
+    This page will automatically refresh every 10 seconds.
+    <a href="" onclick="return stop_refresh();">Stop</a>
+    <br /><br />
+</div>
+{% endif %}
+
+<div class="top_bar">
+<div id="submission_details">
+<table width="100%">
+<tr>
+    <td class="leftcolumn">Submitter:</td>
+    <td>{% include "user/display_name.html" with user=sub.user %}</td>
+</tr>
+<tr>
+    <td class="leftcolumn">Date Submitted:</td>
+    <td><span class="timestamp">{{ sub.submitted_on }}</span></td>
+</tr>
+<tr>
+    <td class="leftcolumn">Filename:</td>
+    <td>{{ sub.original_filename }}</td>
+</tr>
+</table>
+</div>
+
+<div id="upload_settings">
+<table>
+<tr><td colspan="2">
+    <b>Upload Settings</b></td>
+</tr>
+<tr>
+    <td class="leftcolumn">Parity:</td>
+    <td>{{ sub.get_parity_display }}</td>
+</tr>
+<tr>
+    <td class="leftcolumn">Scale Units:</td>
+    <td>{{ sub.get_scale_units_display }}</td>
+</tr>
+<tr>
+    <td class="leftcolumn">Scale Type:</td>
+    <td>{{ sub.get_scale_type_display }}</td>
+</tr>
+{% if sub.scale_type == "ul" %}
+<tr>
+    <td class="leftcolumn">Scale Lower Bound:</td>
+    <td>{{ sub.scale_lower }}</td>
+</tr>
+<tr>
+    <td class="leftcolumn">Scale Upper Bound:</td>
+    <td>{{ sub.scale_upper }}</td>
+</tr>
+{% else %}
+<tr>
+    <td class="leftcolumn">Scale Estimate:</td>
+    <td>{{ sub.scale_est }}</td>
+</tr>
+<tr>
+    <td class="leftcolumn">Scale Error:</td>
+    <td>{{ sub.scale_err }}%</td>
+</tr>
+{% endif %}
+{% if sub.positional_error %}
+<tr>
+    <td class="leftcolumn">Star Positional Error:</td>
+    <td>{{ sub.positional_error }} pixels</td>
+</tr>
+{% endif %}
+{% if sub.center_ra and sub.center_dec and sub.radius %}
+<tr>
+    <td class="leftcolumn">Limits:</td>
+    <td>RA, Dec - ({{ sub.center_ra }}, {{ sub.center_dec }})<br />
+        radius - {{ sub.radius }}
+    </td>
+</tr>
+{% endif %}
+{% if sub.downsample_factor %}
+<tr>
+    <td class="leftcolumn">Downsample Factor:</td>
+    <td>{{ sub.downsample_factor }}</td>
+</tr>
+{% endif %}
+{% if sub.tweak_order != 2 %}
+<tr>
+    <td class="leftcolumn">Tweak Order:</td>
+    <td>{{ sub.tweak_order }}</td>
+</tr>
+{% endif %}
+{% if sub.use_sextractor %}
+<tr>
+    <td class="leftcolumn">Source detection:</td>
+    <td>SExtractor</td>
+</tr>
+{% endif %}
+{% if sub.crpix_center %}
+<tr>
+    <td class="leftcolumn">CRPIX:</td>
+    <td>center</td>
+</tr>
+{% endif %}
+</table>
+</div>
+<div style="clear:both"></div>
+</div>
+<br />
+
+<table id="submission_images">
+{% for image in sub.user_images.all %}
+<tr>
+<td>
+    <a href="{% url 'user_image' image.id %}">
+    <img src="{% url 'serve_image' id=image.image.get_thumbnail.id %}" />
+    </a>
+</td>
+<td>
+    <a href="{% url 'user_image' image.id %}">Go to results page</a>
+    <br/>
+    {% for job in image.jobs.all %}
+    Job {{ job.id }}: {% include "job/status.html" with job=job %}<br />
+
+    {% if image.image.is_source_list %}
+    {% else %}
+
+    <a href="{% url 'extraction_image' job_id=job.id size='display' %}">Source extraction image</a> 
+    <a href="{% url 'extraction_image' job_id=job.id size='full' %}">(fullsize)</a><br />
+
+    {% endif %}
+
+    <a href="" class="log_tail_link">Log file tail <span>[-]</span><br /></a>
+    <div class="log_tail">
+	<a href={% url 'job_log_file' jobid=job.id %}>(full)</a><br />
+<pre>{{ job.get_log_tail }}</pre>
+    </div>
+	<a href={% url 'job_log_file_2' jobid=job.id %}>Log file 2</a>
+
+    {% empty %}
+	Waiting for processing to start...
+    {% endfor %}
+</td>
+</tr>
+{% empty %}
+    <tr><td>
+    {% if sub.processing_finished and sub.error_message %}
+        Unfortunately, we couldn't process this submission properly:<br/>
+        <div style="width:640px; overflow:auto"><pre>{{ sub.error_message }}</pre>
+    {% else %}
+
+       {% if sub.processing_finished and sub.user_images.count == 0 %}
+
+          {# Avoid a race condition where a user_image has been created between when we checked above, and now. #}
+
+          Unfortunately, we failed to identify your image.
+
+          {% if sub.user.username == anonymous_username %}
+          <p class="notice">
+            Since you are not logged in, we <b>intentionally</b> don't show your image
+            here.  (We don't want to host arbitrary images for anonymous users!)
+          </p>
+          {% endif %}
+
+        {% else %}
+
+          Thanks for your submission! Please bear with us while we
+          process it.  Usually we will have results within 10 minutes.
+
+          {% if sub.user.username == anonymous_username %}
+          <p class="notice">
+            Please note: since you are not logged in, the contents and
+            results of your submission will only be available upon a
+            successful calibration.
+          </p>
+          {% endif %}
+
+       {% endif %}
+    {% endif %}
+    </td></tr>
+{% endfor %}
+</table>
+{% endblock %}

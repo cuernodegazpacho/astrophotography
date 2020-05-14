@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block inline_css %}
+{{block.super}}
+{% include 'user_image/image_set.css' %}
+{% include 'tag/list.css' %}
+{% include 'job/status.css' %}
+{% include 'form_ajax.css' %}
+<style type="text/css">
+#album_info {
+    float: left;
+    width: 50%;
+}
+#tags {
+    float: left;
+    padding-left: 10px;
+    border-left: 1px solid #ccc;
+}
+</style>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+{% include 'form_ajax.js' %}
+{% include 'comment/comment.js' %}
+{% include 'tag/tag.js' %}
+{% endblock %}
+
+{% block title %}
+Albums &gt; 
+<a href="{{ album.get_absolute_url }}">{{ album.title }}</a>
+{% endblock %}
+{% block content %}
+
+{% if user == album.user %}
+<div>
+    <a href="{% url 'album_edit' album_id=album.id %}">Edit Album</a> | 
+    <a class="confirm"
+       title="Are you sure you want to delete this album? (The images in it will not be deleted.)"
+       href="{% url 'album_delete' album_id=album.id %}?next={% url 'dashboard_albums' %}">Delete Album</a>
+    <hr />
+</div>
+{%endif %}
+<div class="top_bar">
+    <div id="album_info">
+        Submitted by {% include 'user/display_name.html' with user=album.user %}<br />
+        <span class="timestamp">{{ album.created_at|date:"Y-m-d" }}</span><br />
+        {{ album.user_images.all|length }} image{{ album.user_images.all|pluralize }}<br />
+        {% comment %}{% if user.is_authenticated and user == album.user %}
+        <br />
+        <div class="indent">publicly visible:
+            {% include 'hideable/publicly_visible.html' with hideable=album %}
+        </div>
+        {% endif %}
+        {% endcomment %}
+    </div>
+    <div id="tags">
+        <h3>Tags</h3>
+        {%comment %}{% include 'tag/user_image_tag_list.html' with user_image_id=image.id tags=image.tags.all tagged_object_owner=image.user next=request.path %}
+        {% endcomment %}
+        <p><a class="add_tag" href="#">Add Tag (TODO)</a></p>
+    </div>
+    <div id="description" style="clear:both">
+    {{ album.description }}
+    </div>
+</div>
+<br />
+<div id="album_images">
+    {% include 'user_image/paginated_image_set.html' with image_page=image_page %}
+</div>
+<div id="comments">
+    <h3>Comments</h3>
+    {% include 'comment/list.html' with comments=album.comment_receiver.comments.all next=request.path %}
+    {% include 'comment/form.html' with comment_form=comment_form category='album' recipient_id=album.comment_receiver.id next=request.path %}
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'user/base.html' %}
+
+{% block inline_css %}
+{{block.super}}
+{% include 'user_image/image_set.css' %}
+{% include 'submission/list.css' %}
+{% include 'job/status.css' %}
+{% include 'dashboard/api_key.css' %}
+<style type="text/css">
+#account_info {
+    float: left;
+    width: 50%;
+    border-right: 1px solid #ccc;
+}
+#usage_stats {
+    float: left;
+    padding-left: 10px;
+}
+</style>
+{% endblock %}
+
+{% block title %}
+{{block.super}} 
+{% endblock %}
+
+{% block user_content %}
+<div class="top_bar">
+    <div id="account_info">
+        <h3>Account Info</h3>
+        <div id="registered_on">registered on: <span class="timestamp">{{ display_user.date_joined }}</span></div>
+        <div id="last_signin">last signed in: <span class="timestamp">{{ display_user.last_login }}</span></div>
+        {% if user.is_authenticated and user == display_user %}
+        <br /><div>my API key: {% include 'user/api_key.html' with apikey=profile.apikey %}</div>
+        {% endif %}
+    </div>
+    <div id="usage_stats">
+        <h3>Usage Stats</h3>
+        {% with submission_count=display_user.submissions.all.count %}
+        {% with image_count=display_user.user_images.all.count %}
+        {% with comment_count=display_user.comments_left.all.count %}
+        <div id="submission_count">{{submission_count}} submission{{submission_count|pluralize}}</div>
+        <div id="image_count">{{image_count}} image{{image_count|pluralize}}</div>
+        <div id="comment_count">{{comment_count}} comment{{comment_count|pluralize}}</div>
+        {% endwith %}{% endwith %}{% endwith %}
+    </div>
+    <div style="clear:both"></div>
+</div>
+<div id="profile_data">
+    <div id="profile_images">
+        <h2 style="display:inline-block">Recent Images</h2>
+        {% if display_user.user_images.all %}  
+        (<a href="{% url 'user_images' user_id=display_user.id %}">View All</a>)
+        {% endif %}
+        {% include 'user_image/image_set.html' with images=recent_images|slice:":3" %}
+    </div>
+    <div id="profile_submissions">
+        <h2 style="display:inline-block">Recent Submissions</h2>
+        {% if display_user.submissions.all %}  
+        (<a href="{% url 'user_submissions' user_id=display_user.id %}">View All</a>)
+        {% endif %}
+        {% include 'submission/list.html' with submissions=recent_submissions %}
+    </div>
+</div>
+<div style="clear:both"></div>
+{% endblock %}

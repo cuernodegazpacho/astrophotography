@@ -1,0 +1,88 @@
+{% extends "user_image/view.html" %}
+
+{% block inline_css %}
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}
+
+{% block title %}
+{{block.super}} &gt;
+<a href="{% url 'image_edit' user_image_id=image.id %}">Edit</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" action="{% url 'image_edit' user_image_id=image.id %}">
+{% csrf_token %}
+<table class="settings_table">
+<tr>
+    <td class="leftcolumn" style="border:0px">
+        <div class="setting_title">Description:</div>
+        <div class="setting_description">
+        </div>
+    </td>
+    <td style="border:0px">
+        {{ image_form.description }}
+        {{ image_form.description.errors }}
+    </td>
+</tr>
+<tr>
+    <td class="leftcolumn">
+        <div class="setting_title">Album</div>
+        <div class="setting_description">
+            Select an album to move this image into. You can
+            <a href="{% url 'dashboard_create_album' %}">
+            create new albums</a> at your dashboard.
+        </div>
+    </td>
+    <td>
+        {{ image_form.album }}
+    </td>
+</tr>
+<tr>
+    <td class="leftcolumn">
+        <div class="setting_title">Flags</div>
+        <div class="setting_description"></div>
+    </td>
+    <td>
+        {% include 'flag/chooser.html' with flags=flags selected_flags=selected_flags %}
+    </td>
+</tr>
+<tr>
+    <td class="leftcolumn">
+        <div class="setting_title">Visibility:</div>
+        <div class="setting_description">
+            Permit anyone to view this image?
+        </div>
+    </td>
+    <td>
+        {{ image_form.publicly_visible }}
+        {{ image_form.publicly_visible.errors }}
+    </td>
+</tr>
+<tr>
+    <td class="leftcolumn">
+        <div class="setting_title">License:</div>
+        <div class="setting_description">
+            Your default license setting is
+            {% include 'license/license_link.html' with license=user.get_profile.default_license %}.
+        </div>
+    </td>
+    <td>
+        <b>Allow commercial use?</b><br />
+        {{ license_form.allow_commercial_use }}
+        {{ license_form.allow_commercial_use.errors }}
+        <br /><br />
+        <b>Allow modifications?</b><br />
+        {{ license_form.allow_modifications.errors }}
+        {{ license_form.allow_modifications }}
+    </td>
+</tr>
+</table>
+<br />
+<div style="text-align:center">
+    <input type="submit" value="Save Changes" class="bigbutton" />
+    <a href="{{ image.get_absolute_url }}" style="margin-left:10px">Cancel</a>
+</div>
+</form>
+{% endblock %}

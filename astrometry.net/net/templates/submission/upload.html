@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block bodytag %}
+<body onLoad="enableSubmit()">
+{% endblock bodytag %}
+
+{% block inline_css %}
+{{block.super}}
+<style type="text/css">
+#new_album_title_block {padding-left: 50px}
+#scale_custom_block  {padding-left: 50px}
+#file_block {height: 2em}
+#url_block {height: 2em; display: none}
+#upload_block {
+    width: 75%;
+    margin: auto; 
+    padding: 10px;
+    background-color: #eee; 
+    border: 1px solid #000; 
+    text-align: center;
+}
+</style>
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super }}
+<script type="text/javascript">
+function changeUploadType(type) {
+    $('#file_block').toggle(type == 'file');
+    $('#url_block').toggle(type == 'url');
+
+    // clear file upload by replacing it
+    if (type == 'url') {
+        $("#file_block").html('{{ form.file }}');
+    }
+}
+var advanced_settings = {% if form.advanced_settings.data == 'True' %}true{% else %}false{% endif %};
+function toggleAdvancedSettings() {
+    if (advanced_settings) {
+        $('#settings_block').stop(true, true).slideDown();
+        $('input[name=advanced_settings]').val('True');
+        $('#settings_link').children('span').text("[-]");
+    }
+    else {
+        $('#settings_block').stop(true, true).slideUp();
+        $('input[name=advanced_settings]').val('False');
+        $('#settings_link').children('span').text("[+]");
+    }
+    advanced_settings = !advanced_settings;
+}
+function changeScaleType(type) {
+    $('#ul_block').toggle(type == 'ul');
+    $('#ev_block').toggle(type == 'ev');
+}
+function changeScalePreset(type) {
+    $('#scale_custom_block').toggle(type == '5');
+}
+function changeAlbum(album_val) {
+    $('#new_album_title_block').toggle(album_val == 'new');
+}
+function enableSubmit() {
+    submit = document.getElementById('submit');
+    submit.removeAttribute('disabled');
+}
+function disableSubmit() {
+    submit = document.getElementById('submit');
+    submit.disabled = true;
+    setTimeout("enableSubmit()", 1000);
+}
+$(document).ready(function() {
+    $('input[name=upload_type]:radio').click(function() {
+        changeUploadType($(this).val());
+    });
+    changeUploadType($('input[name=upload_type]:radio:checked').val());
+
+    $('input[name=scale_type]:radio').click(function() {
+        changeScaleType($(this).val());
+    });
+    changeScaleType($('input[name=scale_type]:radio:checked').val());
+
+    $('input[name=scale_preset]:radio').click(function() {
+        changeScalePreset($(this).val());
+    });
+    changeScalePreset($('input[name=scale_preset]:radio:checked').val());
+    
+    $("select[name=album]").change(function () {
+        changeAlbum($("select[name=album] option:selected").val());
+    });
+    changeAlbum($("select[name=album] option:selected").val());
+    
+    $('#settings_link').click(function(e) {
+        toggleAdvancedSettings();
+        e.preventDefault();
+    });
+    toggleAdvancedSettings();
+    $('#settings_block').stop(true, true);
+});
+</script>
+{% endblock %}
+
+{% block title %}
+Upload
+{% endblock %}
+
+{% block content %}
+<form onsubmit="disableSubmit()" id="upload_form" name="upload_form" action="/upload/" method="post" enctype="multipart/form-data">
+{% csrf_token %}
+{% if form.errors %}
+Sorry, your submission could not be completed. Please fix all of the <span class="errorlist">highlighted</span> errors:<br /><br />
+{% endif %}
+<div id="upload_block">
+    <div style="padding-bottom:5px">
+        <b>Select a file or url to upload</b><br />
+        <div id="file_block">{{ form.file }}</div>
+        <div id="url_block">{{ form.url }}</div>
+        {% if form.non_field_errors %}
+            {{ form.non_field_errors }}<br />
+        {% endif %}
+        {{ form.upload_type }}
+    </div>
+    <div class="setting_description" style="width:75%; margin:auto; text-align: left">
+        The following file types are supported:
+        <ul>
+            <li><b>JPEG, GIF, PNG, or FITS image</b></li>
+            <li><b>FITS binary table</b>, containing a BINTABLE of detected objects, with X and Y pixel positions in "D" (double) or "E" (float) columns, with one object per row</li>
+            <li><b>text list</b>, containing two columns of digits separated by commas or whitespace, listing the X,Y positions of sources, sorted with the brightest sources first</li>
+            <li><b>tarball (.tar, .gz)</b>, containing files of any of the above types
+        </ul>
+    </div>
+    <input type="submit" name="submit" id="submit" value="Upload" class="bigbutton" />
+</div>
+<!--<br />
+<table class="settings_table">
+<tr>
+    <td class="leftcolumn">
+        <div class="setting_title">File Type:</div>
+        <dl class="setting_description">
+            <dt>image</dt>
+                <dd>A JPEG, GIF, PNG, or FITS image.</dd><br />
+            <dt>FITS binary table</dt>
+                <dd>Must contain a BINTABLE of detected objects, with X and Y pixel positions in "D" (double) or "E" (float) columns, with one object per row.</dd><br />
+            <dt>text list</dt>
+                <dd>A text file, containing two columns of digits separated by commas or whitespace, listing the X,Y positions of sources, sorted with the brightest sources first.</dd><br />
+        </dl>
+    </td>
+    <td>
+        {{ form.source_type }}
+    </td>
+</tr>
+</table>-->
+
+<h4 style="text-align: center"><a href="#" id="settings_link">Advanced Settings <span>[+]</span></a></h4>
+<div id="settings_block">
+{{ form.advanced_settings }}
+<table class="settings_table">
+<tbody>
+<tr>
+    <td class="leftcolumn">
+        <div class="setting_title">Album:</div>
+        <div class="setting_description">
+            {% if user.is_authenticated %}
+                Select an optional album to add the image(s) from this submission to.
+            {% else %}
+                To create albums, please
+                <a href="{% url 'signin' %}?next={{ request.path }}">Sign In</a>.
+            {% endif %}
+        </div>
+    </td>
+    <td>
+        {% if user.is_authenticated %}
+            {{ form.album }}
+            {{ form.album.errors }}
+            <br /><br />
+            <div id="new_album_title_block">
+                Title: {{ form.new_album_title }}
+                {{ form.new_album_title.errors }}
+            </div>
+        {% endif %}
+    </td>
+</tr>
+<tr>
+    <td class="leftcolumn">
+        <div class="setting_title">Visibility:</div>
+        <div class="setting_description">
+            {% if user.is_authenticated %}
+                Permit anyone to view the content contained in and resulting from this submission?
+            {% else %}
+                By submitting anonymously, you agree that the content contained
+                in and resulting from this submission may be viewed publicly.
+                To change this setting, please
+                <a href="{% url 'signin' %}?next={{ request.path }}">Sign In</a>.
+            {% endif %}
+        </div>
+    </td>
+    <td>
+        {% if user.is_authenticated %}
+            {{ form.publicly_visible }}
+            {{ form.publicly_visible.errors }}
+        {% else %}
+            <input type="hidden" name="publicly_visible" value="y" />
+        {% endif %}
+    </td>
+</tr>
+<tr>
+    <td class="leftcolumn">
+        <div class="setting_title">License:</div>
+        <div class="setting_description">
+            {% if user.is_authenticated %}
+                Your default license setting is
+                {% include 'license/license_link.html' with license=default_license %}.
+            {% else %}
+                By submitting anonymously, you agree that your submitted image
+                will be governed by
+                {% include 'license/license_link.html' with license=default_license %}.
+                To change this license setting, please <a href="{% url 'signin' %}?next={{ request.path }}">Sign In</a>.
+            {% endif %}
+        </div>
+    </td>
+    <td>
+        {% if user.is_authenticated %}
+            <b>Allow commercial use?</b><br />
+            {{ form.allow_commercial_use }}
+            {{ form.allow_commercial_use.errors }}
+            <br /><br />
+            <b>Allow modifications?</b><br />
+            {{ form.allow_modifications.errors }}
+            {{ form.allow_modifications }}
+        {% else %}
+            <input type="hidden" name="allow_commercial_use" value="d" />
+            <input type="hidden" name="allow_modifications" value="d" />
+        {% endif %}
+    </td>
+</tr>
+<tr> 
+    <td class="leftcolumn">
+        <div class="setting_title">Scale:</div>
+        <div class="setting_description">If you provide an estimate of the size of your field, our search will be much faster. Most digital-camera images are at least 10 degrees wide; most professional-grade telescopes are narrower than 2 degrees.</div> 
+    </td> 
+    <td>
+        {{ form.scale_preset }}<br />
+        <br />
+        <div id="scale_custom_block">
+            Units: {{ form.scale_units }}<br /><br />
+            {{ form.scale_type }}<br /><br />
+            <div id="ul_block">
+                Lower bound:<br />{{ form.scale_lower }}{{ form.scale_lower.errors }}<br /><br />
+                Upper bound:<br />{{ form.scale_upper }}{{ form.scale_upper.errors }}<br />
+            </div>
+            <div id="ev_block">
+                Estimate:<br />{{ form.scale_est }}{{ form.scale_est.errors }}<br /><br />
+                Error:<br />{{ form.scale_err }}% {{ form.scale_err.errors }}
+            </div>
+        </div>
+    </td>
+</tr> 
+<tr> 
+    <td class="leftcolumn">
+        <div class="setting_title">Parity:</div>
+        <div class="setting_description">Flipping an image reverses its "parity". If you point a digital camera at the sky and submit the JPEG, it probably has negative parity. If you have a FITS image, it probably has positive parity. Selecting the right parity will make the solving process run faster, but if in doubt just try both.
+        </div> 
+    </td> 
+    <td>
+        {{ form.parity }}{{ form.parity.errors }}
+    </td>
+</tr> 
+<tr>  
+    <td class="leftcolumn">
+        <div class="setting_title">Star Positional Error:</div>
+        <div class="setting_description">When we find a matching "landmark", we check to see how many of the stars in your field match up with stars we know about. To do this, we need to know how much a star in your field could have moved from where it should be.
+        </div> 
+    </td> 
+    <td>
+        {{ form.positional_error }} pixels {{ form.positional_error.errors }}
+    </td>
+</tr> 
+<tr> 
+    <td class="leftcolumn">
+        <div class="setting_title">Limits:</div>
+        <div class="setting_description">In order to narrow down our search, you can supply a field center along with a radius. We will only search in indexes which fall within this area.</div> 
+    </td> 
+    <td>
+        <table>
+        <tr><td>RA:</td><td>{{ form.center_ra }} degrees {{ form.center_ra.errors }}</td></tr>
+        <tr><td>Dec:</td><td>{{ form.center_dec }} degrees {{ form.center_dec.errors }}</td></tr>
+        <tr><td>Radius:</td><td>{{ form.radius }} degrees {{ form.radius.errors }}</td></tr>
+        </table>
+    </td>
+</tr> 
+<tr> 
+    <td class="leftcolumn">
+        <div class="setting_title">Tweak:</div>
+        <div class="setting_description">By default we try to compute a SIP polynomial distortion correction with order <b>2</b>.
+          You can disable this by changing the order to <b>0</b>, or change the polynomial order.</div> 
+    </td> 
+    <td>
+      Order: {{ form.tweak_order }} {{ form.tweak_order.errors }}
+    </td>
+</tr> 
+<tr> 
+    <td class="leftcolumn">
+        <div class="setting_title">CRPIX center:</div>
+        <div class="setting_description">By default the reference point (CRPIX) of the WCS we compute can be anywhere
+          in your image, but often it's convenient to force it to be the center of the image.</div>
+    </td> 
+    <td>
+      {{ form.crpix_center }} CRPIX in center {{ form.crpix_center.errors }}
+    </td>
+</tr> 
+<tr> 
+    <td class="leftcolumn">
+        <div class="setting_title">Downsample:</div>
+        <div class="setting_description">We can downsample your image by a given factor before performing the source extraction.</div> 
+    </td> 
+    <td>
+        {{ form.downsample_factor }} (factor) {{ form.downsample_factor.errors }}<br />
+    </td>
+</tr> 
+<tr> 
+    <td class="leftcolumn">
+        <div class="setting_title">Invert:</div>
+        <div class="setting_description">Set this if your image is black-on-white (inverted) rather than white-on-black.</div>
+    </td> 
+    <td>
+        {{ form.invert }} Invert image {{ form.invert.errors }}<br />
+    </td>
+</tr> 
+<tr> 
+    <td class="leftcolumn">
+        <div class="setting_title">SourceExtractor:</div>
+        <div class="setting_description">We can detect stars using 
+          <a href="http://www.astromatic.net/software/sextractor">SExtractor</a>,
+          or our own built-in star detector "simplexy".  If the built-in one fails,
+          give this a try.</div>
+    </td> 
+    <td>
+      {{ form.use_sextractor }} use SExtractor  {{ form.use_sextractor.errors }}<br />
+    </td>
+</tr> 
+</tbody>
+</table>
+<div style="text-align: center"><input type="submit" value="Upload" class="bigbutton" /></div>
+</div>
+</form>
+{% endblock %}

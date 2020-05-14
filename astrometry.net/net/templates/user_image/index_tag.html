@@ -1,0 +1,34 @@
+{% extends 'user_image/index.html' %}
+
+{% block javascript %}
+{{ block.super }}
+<script type="text/javascript">
+$(document).ready(function() {
+    $("#id_query").autocomplete('/tags/autocomplete');
+});
+</script>
+{% endblock %}
+
+{% block title %}
+{{ block.super }}
+{% with form=tag_search_form %}
+{% if tag %}
+    &gt; Tagged with {{ tag.text }}
+{% else %}
+    {% if form.query.data %}
+        &gt; Tag Search: '{{ form.query.data }}'
+    {% endif %}
+{% endif %}
+{% endwith %}
+{% endblock %}
+
+{% block search_settings %}
+{{ tag_search_form.query }}
+<input type="submit" value="Search" />
+{{ tag_search_form.exact }}
+<label for="id_exact">match exact</label>
+{% endblock %}
+
+{% block search_results %}
+{{ block.super }}
+{% endblock %}

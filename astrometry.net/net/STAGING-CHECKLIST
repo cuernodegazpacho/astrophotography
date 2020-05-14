@@ -1,0 +1,154 @@
+
+-----------------------------------------------
+       Preparing a "staging" release.
+-----------------------------------------------
+
+(0.) Become nova@oven.
+
+(0.5) Merge any changes made on the current "nova" branch into trunk:
+
+    cd ~/nova
+    svn up
+    svn log -v | less  # look for tagged rev and any changes;
+
+    cd ~/supernova
+    svn merge -r 22222:HEAD ^/tags/nova/2011-01-01-1
+    svn commit -m "merged naughty change on nova tag"
+
+(1.) Tag the code:
+
+    cd ~/supernova
+    svn up
+    svn copy -m "tag" . ^/tags/nova/2011-06-29-1 
+
+(with today's date, and an appropriate release number)
+
+(2.) Stop staging's process_submissions.py:
+
+screen -R staging
+# kill running process_submissions -- possible via:
+  jobs
+  fg 1
+  [ctrl-C]
+or:
+  jobs
+  kill %1
+
+# exit the "screen"
+  [ctrl-A d]
+
+(3.) Update the staging area and build:
+
+    cd ~/staging
+    svn switch ^/tags/nova/2011-06-29-1
+    make
+    make py
+    make extra
+
+(4.) Backup the nova database and data:
+
+     become nova@broiler, run the cron jobs that do the rsync and database dump
+
+(5.) Prepare the staging data area.  We use the "unionfs-fuse" union
+filesystem for this.  Staging has a read-only view of nova's data,
+plus a read-write overlay.  This lets us test out staging with a full
+data set without worrying about corrupting nova's data or making the
+data and database inconsistent.  (Ditto for the "jobs" directory.)
+
+    cd ~/staging/net
+    ./remake-data-dir.sh
+
+(6.) Copy the nova database:
+
+The exact details will depend on whether you have to run any elaborate
+schema migration scripts.  In the simplest case, copy the database.
+
+    dropdb an-staging
+    createdb an-staging
+    pg_dump an-nova | psql an-staging
+
+OLD INSTRUCTIONS (db copy requires too much downtime on nova)::
+
+    # stop process_submissions.py on nova temporarily, to allow access to an-nova database
+    screen -R nova
+    fg 1
+    [ctrl-C]
+    #exit the 'screen'
+    [ctrl-A d]
+
+	# Recreate the an-staging-source database as a duplicate of an-nova as it is.
+    # (an-staging-source is used as an intermediary db, so that an-nova and
+    # nova's process_submissions.py can be left alone as much as possible)
+    dropdb an-staging-source
+    createdb -O nova -T an-nova an-staging-source
+
+    # restart process_submissions.py on nova
+    screen -R nova
+    cd ~/nova/net
+    (for ((;;)); do python -u process_submissions.py -j 8 -s 4 > dj.log 2>&1; sleep 10; done) &
+    [ctrl-A d]
+
+    # recreate the an-staging database from an-staging-source
+    dropdb an-staging
+    createdb -O nova -T an-staging-source an-staging
+
+(7.) Migrate the staging database:
+
+     python manage.py migrate
+
+(8.) Restart process_submissions.py on staging:
+    
+    screen -R staging
+    cd ~/staging/net
+    (for ((;;)); do python -u process_submissions.py -j 4 -s 4 > dj.log 2>&1; sleep 10; done) &
+    [ctrl-A d]
+
+(9.) If necessary, restart staging's apache:
+
+    sudo bash
+    source ~nova/.bashrc
+    /etc/apache2-staging/stop-apache
+    /etc/apache2-staging/start-apache
+
+(9.) Test it out.
+
+(10.) Decide to launch!
+
+
+
+
+
+-----------------------------------------------
+     So you decided to launch.  Updating Nova:
+-----------------------------------------------
+
+(1.) Get dstn to take down the apache2-nova server.
+
+    sudo /etc/apache2-nova/stop-apache
+
+(2.) Become nova@oven .
+
+(3.) Stop nova's process_submissions.py (as described above)
+
+(4.) Update the code and build.
+
+    cd ~/nova
+    svn switch ^/tags/nova/2011-06-29-1
+    make
+    make py
+    make extra
+
+(5.) Migrate the database:
+
+    cd net
+    python manage.py migrate
+
+(6.) Restart nova's process_submissions.py (as described above)
+
+(7.) Get dstn to bring up the apache2-nova server again.
+
+    sudo bash
+    source ~nova/.bashrc
+    /etc/apache2-nova/start-apache
+
+
