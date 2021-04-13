@@ -1,0 +1,5 @@
+astropy
+rawpy
+exifread
+jupyter
+matplotlib
