@@ -1,5 +1,7 @@
 rawpy
+exifread
 astropy
+photutils
 scipy
 jupyter
 matplotlib
