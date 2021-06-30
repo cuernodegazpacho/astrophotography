@@ -1,4 +1,5 @@
 rawpy
+libtiff
 exifread
 astropy
 photutils
