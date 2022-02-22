@@ -4,5 +4,6 @@ exifread
 astropy
 photutils
 scipy
+synphot
 jupyter
 matplotlib
