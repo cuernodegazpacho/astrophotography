@@ -1,5 +1,9 @@
-astropy
 rawpy
+libtiff
 exifread
+astropy
+photutils
+scipy
+synphot
 jupyter
 matplotlib

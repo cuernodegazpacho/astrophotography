@@ -1,0 +1,2 @@
+git remote set-url origin https://cuernodegazpacho@github.com/cuernodegazpacho/astrophotography.git
+
