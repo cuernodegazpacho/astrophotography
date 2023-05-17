@@ -1,9 +1,11 @@
+numpy
 rawpy
 libtiff
 exifread
 astropy
 photutils
 scipy
+gwcs
 synphot
 jupyter
 matplotlib
