@@ -1,1 +1,2 @@
-DATA = '/Volumes/PortableSSD/backup/Projects/'
+# DATA = '/Volumes/PortableSSD/backup/Projects/'
+DATA = '/Users/busko/Projects/'
