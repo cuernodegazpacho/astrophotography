@@ -33,9 +33,9 @@ class Worker:
     It provides the callable for the `Pool.apply_async` function, and also
     holds all parameters necessary to perform the calculation.
 
-    The 'step' parameters helps save time by allowing the algorithm to work
+    The 'step' parameters help save time by allowing the algorithm to work
     only on pixels separated by 'step' (in both X and Y). The remaining pixels
-    are filled by interpolation with a 9x9 Gaussian kernel.
+    are filled elsewhere by interpolation with a 9x9 Gaussian kernel.
     '''
     def __init__(self, x0, y0, size_x, size_y, step_x, step_y, centroid_x, centroid_y,
                 offset_x, offset_y):
@@ -116,7 +116,7 @@ class Worker:
                 self.offset_array_y[j][i] = weighted_offset_y
 
         # return the local output arrays with offsets for this section of the image,
-        # plus metadata to locate the section on the full offsets arrays.
+        # plus metadata to locate the section on the offsets arrays.
 
         return {'x0': self.x0,
                 'y0': self.y0,

@@ -8,3 +8,4 @@ scipy
 synphot
 jupyter
 matplotlib
+ipympl
